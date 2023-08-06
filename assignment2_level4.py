@@ -12,7 +12,8 @@ route_stations = []
 output_list = []
 same_line_list = []
 unique_station_list = []
-final_output_list = []
+origin_line = []
+destination_line = []
 
 
 def format_input(name_input):
@@ -124,40 +125,36 @@ def check_same_line(check_list):
 
 
 def check_interchange_lines(origin, destination, interchange_list):
+    origin_line_name = []
+    destination_line_name = []
     return_list = []
     for i in range(1, 6):
         line = station_DB.get(i)
         if origin in line:
-            origin_line = line
+            origin_line.append(line)
+            origin_line_name.append(station_name_DB.get(i))
         if destination in line:
-            destination_line = line
+            destination_line.append(line)
+            destination_line_name.append(station_name_DB.get(i))
     for item1 in interchange_list:
-        for item2 in origin_line:
-            for item3 in destination_line:
-                if item1 == item2 and item1 == item3:
-                    return_list.append(item1)
+        for j in range(len(origin_line)):
+            for k in range(len(destination_line)):
+                if item1 in origin_line[j] and item1 in destination_line[k]:
+                    return_list.append([origin_line_name[j], destination_line_name[k], item1])
     return return_list
 
 
-def build_output_line(check_list):
-    for item in check_list:
-        for j in range(1, 6):
-            if item == j:
-                output_list.append(station_name_DB.get(j) + ": ")
-    output_list.sort()
-
-
 def build_output_station(route_list, origin, destination):
-    global final_output_list
-    for i in range(len(route_list)):
-        attach_string = origin + "->" + route_list[i]
-        attach_string2 = route_list[i] + "->" + destination
-        if i != len(route_list) and len(route_list) != 1:
-            final_output_list.append(output_list[i] + attach_string)
-            final_output_list.append(output_list[i + 1] + attach_string2)
-        elif i != len(route_list) - 1:
-            final_output_list.append(output_list[i] + attach_string)
-            final_output_list.append(output_list[i + 1] + attach_string2)
+    for item2 in route_list:
+        start_line = item2[0]
+        end_line = item2[1]
+        interchange_station = item2[2]
+        output_list.append(start_line + ": " + origin + "->" + interchange_station)
+        output_list.append(end_line + ": " + interchange_station + "->" + destination)
+
+
+def sort_route_list(item1):
+        return item1[2]
 
 
 build_database()
@@ -174,11 +171,13 @@ if station_found:
         if check_same_line(found_list):
             make_interchange_list()
             route_stations = check_interchange_lines(origin_station_input, destination_station_input, interchange)
-            build_output_line(found_list)
-            build_output_station(route_stations, origin_station_input, destination_station_input)
-            final_output_list.sort()
-            for item in final_output_list:
-                print(item)
+            route_stations = sorted(route_stations, key  = sort_route_list)
+            if route_stations:
+                build_output_station(route_stations, origin_station_input, destination_station_input)
+                for item in output_list:
+                    print(item)
+            else:
+                print("More than one change or no route found")
     else:
         print("Station(s) not found")
 else:
